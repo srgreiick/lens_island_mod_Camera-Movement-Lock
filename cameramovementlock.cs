@@ -22,7 +22,7 @@ namespace InputControllerPluginMod
         {
             Instance = this;
             _logger = Logger;
-            configShortCut = Config.Bind("Test", "test", KeyCode.F11, "test");
+            configShortCut = Config.Bind("Test", "test", KeyCode.LeftAlt, "test");
 
             _logger.LogInfo("Patching InputDebugger...");
             harmony.PatchAll(typeof(InputPatchs));
@@ -40,8 +40,7 @@ internal static class InputPatchs
     private const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
     private const uint MOUSEEVENTF_RIGHTUP = 0x0010;
     private static ManualLogSource _logger = InputControllerPlugin._logger;
-    private static int ignoreFirst = 0;
-
+    
     [HarmonyPatch(typeof(CameraController), "Update")]
     [HarmonyPostfix]
     static void Update_Postfix(CameraController __instance)
@@ -54,7 +53,6 @@ internal static class InputPatchs
             if (InputControllerPlugin.isMouseHold)
             {
                 SimulateMouseDown();
-                ignoreFirst++;
                 _logger.LogInfo("Simulating left mouse hold");
             }
             else
