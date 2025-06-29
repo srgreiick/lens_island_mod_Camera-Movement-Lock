@@ -12,7 +12,6 @@ namespace InputControllerPluginMod
     [BepInPlugin("com.tsukasaroot.inputcontroller", "Allow to lock into camera view", "1.0.0")]
     public class InputControllerPlugin : BaseUnityPlugin
     {
-        public static InputControllerPlugin Instance { get; private set; }
         public static ManualLogSource _logger;
         private readonly Harmony harmony = new Harmony("com.tsukasaroot.inputcontroller");
         internal static ConfigEntry<KeyCode> configShortCut;
@@ -20,7 +19,6 @@ namespace InputControllerPluginMod
 
         void Awake()
         {
-            Instance = this;
             _logger = Logger;
             configShortCut = Config.Bind("Test", "test", KeyCode.LeftAlt, "test");
 
