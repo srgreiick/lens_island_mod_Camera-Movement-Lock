@@ -9,7 +9,7 @@ using InputControllerPluginMod;
 
 namespace InputControllerPluginMod
 {
-    [BepInPlugin("com.tsukasaroot.inputcontroller", "Allow to lock into camera view", "1.0.0")]
+    [BepInPlugin("com.tsukasaroot.inputcontroller", "Allow to lock into camera view", "1.0.1")]
     public class InputControllerPlugin : BaseUnityPlugin
     {
         public static ManualLogSource _logger;
@@ -21,8 +21,7 @@ namespace InputControllerPluginMod
         {
             _logger = Logger;
             configShortCut = Config.Bind("Test", "test", KeyCode.LeftAlt, "test");
-
-            _logger.LogInfo("Patching InputDebugger...");
+            _logger.LogInfo("Patching CameraMovementLock...");
             harmony.PatchAll(typeof(InputPatchs));
             _logger.LogInfo($"Plugin {Info.Metadata.Name} v{Info.Metadata.Version} loaded.");
         }
