@@ -20,7 +20,7 @@ namespace InputControllerPluginMod
         void Awake()
         {
             _logger = Logger;
-            configShortCut = Config.Bind("Test", "test", KeyCode.F11, "test");
+            configShortCut = Config.Bind("Toggle Settings", "toggleLock", KeyCode.F11, "Set the key as toggler to lock camera");
             _logger.LogInfo("Patching CameraMovementLock...");
             harmony.PatchAll(typeof(InputPatchs));
             _logger.LogInfo($"Plugin {Info.Metadata.Name} v{Info.Metadata.Version} loaded.");
@@ -45,48 +45,24 @@ internal static class InputPatchs
         if (Input.GetKeyDown(InputControllerPlugin.configShortCut.Value))
         {
             _logger.LogInfo("F11 pressed, toggling mouse hold");
-            InputControllerPlugin.isMouseHold = !InputControllerPlugin.isMouseHold;
-
+            
             if (InputControllerPlugin.isMouseHold)
-            {
-                SimulateMouseDown();
-                _logger.LogInfo("Simulating left mouse hold");
-            }
-            else
             {
                 SimulateMouseUp();
                 _logger.LogInfo("Stopped left mouse hold");
             }
-        }
-
-        if (Input.GetKeyUp(KeyCode.Mouse1))
-        {
-            if (InputControllerPlugin.isMouseHold == true)
-            {
-                InputControllerPlugin.isMouseHold = false;
-                SimulateMouseUp();
-            }
-        }
-
-        if (Input.GetKey(KeyCode.F))
-        {
-            InputControllerPlugin.isMouseHold = false;
-            SimulateMouseUp();
-        }
-
-        if (Input.GetKey(KeyCode.Tab))
-        {
-            if (InputControllerPlugin.isMouseHold)
-            {
-                InputControllerPlugin.isMouseHold = !InputControllerPlugin.isMouseHold;
-            }
-                
-            if (InputControllerPlugin.isMouseHold)
-            {
-                SimulateMouseUp();
-            } else
+            else
             {
                 SimulateMouseDown();
+                _logger.LogInfo("Simulating left mouse hold");
+            }
+        }
+
+        if (Input.GetKeyUp(KeyCode.Tab) || Input.GetKeyUp(KeyCode.F) || Input.GetKeyUp(KeyCode.C) || Input.GetKeyUp(KeyCode.M) || Input.GetKeyUp(KeyCode.Comma))
+        {
+            if (Input.GetMouseButton(1))
+            {
+                SimulateMouseUp();
             }
         }
     }
@@ -95,6 +71,7 @@ internal static class InputPatchs
     {
         try
         {
+            InputControllerPlugin.isMouseHold = true;
             mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
         }
         catch (Exception e)
@@ -107,6 +84,7 @@ internal static class InputPatchs
     {
         try
         {
+            InputControllerPlugin.isMouseHold = false;
             mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
         }
         catch (Exception e)
