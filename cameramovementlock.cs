@@ -20,7 +20,7 @@ namespace InputControllerPluginMod
         void Awake()
         {
             _logger = Logger;
-            configShortCut = Config.Bind("Test", "test", KeyCode.LeftAlt, "test");
+            configShortCut = Config.Bind("Test", "test", KeyCode.F11, "test");
             _logger.LogInfo("Patching CameraMovementLock...");
             harmony.PatchAll(typeof(InputPatchs));
             _logger.LogInfo($"Plugin {Info.Metadata.Name} v{Info.Metadata.Version} loaded.");
@@ -72,6 +72,22 @@ internal static class InputPatchs
         {
             InputControllerPlugin.isMouseHold = false;
             SimulateMouseUp();
+        }
+
+        if (Input.GetKey(KeyCode.Tab))
+        {
+            if (InputControllerPlugin.isMouseHold)
+            {
+                InputControllerPlugin.isMouseHold = !InputControllerPlugin.isMouseHold;
+            }
+                
+            if (InputControllerPlugin.isMouseHold)
+            {
+                SimulateMouseUp();
+            } else
+            {
+                SimulateMouseDown();
+            }
         }
     }
 
