@@ -9,7 +9,7 @@ using InputControllerPluginMod;
 
 namespace InputControllerPluginMod
 {
-    [BepInPlugin("com.tsukasaroot.inputcontroller", "Allow to lock into camera view", "1.0.1")]
+    [BepInPlugin("com.tsukasaroot.inputcontroller", "Allow to lock into camera view", "1.1.0")]
     public class InputControllerPlugin : BaseUnityPlugin
     {
         public static ManualLogSource _logger;
