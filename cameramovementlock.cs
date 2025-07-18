@@ -2,10 +2,8 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using System.Runtime.InteropServices;
 using System;
 using UnityEngine;
-using InputControllerPluginMod;
 
 namespace InputControllerPluginMod
 {
@@ -14,82 +12,79 @@ namespace InputControllerPluginMod
     {
         public static ManualLogSource _logger;
         private readonly Harmony harmony = new Harmony("com.tsukasaroot.inputcontroller");
-        internal static ConfigEntry<KeyCode> configShortCut;
-        public static bool isMouseHold = false;
+
+        // Configurable hold key (replacing right mouse)
+        internal static ConfigEntry<KeyCode> configHoldKey;
+
+        // Internal state tracking
+        public static bool isCameraLockActive = false;
 
         void Awake()
         {
             _logger = Logger;
-            configShortCut = Config.Bind("Toggle Settings", "toggleLock", KeyCode.F11, "Set the key as toggler to lock camera");
-            _logger.LogInfo("Patching CameraMovementLock...");
+
+            configHoldKey = Config.Bind(
+                "Hold Settings",
+                "HoldToLockKey",
+                KeyCode.P, // Default key
+                "Hold this key to simulate holding the right mouse (camera lock)."
+            );
+
+            _logger.LogInfo("Patching CameraController.Update...");
             harmony.PatchAll(typeof(InputPatchs));
             _logger.LogInfo($"Plugin {Info.Metadata.Name} v{Info.Metadata.Version} loaded.");
         }
     }
-}
 
-[HarmonyPatch]
-internal static class InputPatchs
-{
-    [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-    private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
-
-    private const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
-    private const uint MOUSEEVENTF_RIGHTUP = 0x0010;
-    private static ManualLogSource _logger = InputControllerPlugin._logger;
-    
-    [HarmonyPatch(typeof(CameraController), "Update")]
-    [HarmonyPostfix]
-    static void Update_Postfix(CameraController __instance)
+    [HarmonyPatch]
+    internal static class InputPatchs
     {
-        if (Input.GetKeyDown(InputControllerPlugin.configShortCut.Value))
+        private static ManualLogSource _logger => InputControllerPlugin._logger;
+
+        [HarmonyPatch(typeof(CameraController), "Update")]
+        [HarmonyPostfix]
+        static void Update_Postfix(CameraController __instance)
         {
-            _logger.LogInfo("F11 pressed, toggling mouse hold");
-            
-            if (InputControllerPlugin.isMouseHold)
+            KeyCode holdKey = InputControllerPlugin.configHoldKey.Value;
+
+            // Check if key is being held
+            if (Input.GetKey(holdKey))
             {
-                SimulateMouseUp();
-                _logger.LogInfo("Stopped left mouse hold");
+                if (!InputControllerPlugin.isCameraLockActive)
+                {
+                    InputControllerPlugin.isCameraLockActive = true;
+
+                    // Replace this line with the actual camera lock logic (pseudocode here)
+                    __instance.LockCamera = true;
+                    _logger.LogInfo($"[{holdKey}] held — camera lock ON.");
+                }
             }
             else
             {
-                SimulateMouseDown();
-                _logger.LogInfo("Simulating left mouse hold");
-            }
-        }
+                if (InputControllerPlugin.isCameraLockActive)
+                {
+                    InputControllerPlugin.isCameraLockActive = false;
 
-        if (Input.GetKeyUp(KeyCode.Tab) || Input.GetKeyUp(KeyCode.F) || Input.GetKeyUp(KeyCode.C) || Input.GetKeyUp(KeyCode.M) || Input.GetKeyUp(KeyCode.Comma))
-        {
-            if (Input.GetMouseButton(1))
+                    // Replace this line with the actual camera unlock logic
+                    __instance.LockCamera = false;
+                    _logger.LogInfo($"[{holdKey}] released — camera lock OFF.");
+                }
+            }
+
+            // Optional override to force unlock on these key releases
+            if (Input.GetKeyUp(KeyCode.Tab) || Input.GetKeyUp(KeyCode.F) ||
+                Input.GetKeyUp(KeyCode.C) || Input.GetKeyUp(KeyCode.M) ||
+                Input.GetKeyUp(KeyCode.Comma))
             {
-                SimulateMouseUp();
+                if (InputControllerPlugin.isCameraLockActive)
+                {
+                    InputControllerPlugin.isCameraLockActive = false;
+
+                    // Force unlock camera (replace this if needed)
+                    __instance.LockCamera = false;
+                    _logger.LogInfo("Camera lock released due to interrupt key.");
+                }
             }
-        }
-    }
-
-    private static void SimulateMouseDown()
-    {
-        try
-        {
-            InputControllerPlugin.isMouseHold = true;
-            mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError($"Failed to simulate mouse down: {e.Message}");
-        }
-    }
-
-    private static void SimulateMouseUp()
-    {
-        try
-        {
-            InputControllerPlugin.isMouseHold = false;
-            mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
-        }
-        catch (Exception e)
-        {
-            InputControllerPlugin._logger.LogError($"Failed to simulate mouse up: {e.Message}");
         }
     }
 }
